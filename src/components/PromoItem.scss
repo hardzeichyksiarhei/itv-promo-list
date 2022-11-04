@@ -1,16 +1,18 @@
 .promo-item {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   background-color: #80cbc4;
   padding: 10px;
   color: #fff;
-  width: 295px;
-  height: 420px;
   border-radius: 10px;
+  font-size: 24px;
 }
 
 .swiper-slide {
+  transition: width 0.5s ease;
+  transition-property: width !important;
   &:nth-child(2n + 1) {
     .promo-item {
       background-color: #ffab91;
