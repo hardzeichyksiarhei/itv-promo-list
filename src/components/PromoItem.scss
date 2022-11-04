@@ -1,0 +1,19 @@
+.promo-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #80cbc4;
+  padding: 10px;
+  color: #fff;
+  width: 295px;
+  height: 420px;
+  border-radius: 10px;
+}
+
+.swiper-slide {
+  &:nth-child(2n + 1) {
+    .promo-item {
+      background-color: #ffab91;
+    }
+  }
+}
