@@ -1,12 +1,11 @@
+import { useEffect, useRef, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Keyboard } from "swiper";
 
 import PromoItem from "./PromoItem";
 
 import "swiper/css";
 
 import "./PromoList.scss";
-import { useRef, useState } from "react";
 
 const ITEMS = [
   { id: 1 },
@@ -46,8 +45,8 @@ const PromoList = () => {
 
     removeAutoVideoTimer();
 
-    setPosterType("poster");
     setCurrentPosterIndex(nextPosterIndex);
+    setPosterType("poster");
 
     addAutoVideoTimer(nextPosterIndex);
   };
@@ -69,7 +68,9 @@ const PromoList = () => {
         inTransitionSaveTimerMilliSeconds
       );
     } else if (value === false) {
-      if (inTransitionSaveTimer) clearTimeout(inTransitionSaveTimer);
+      if (inTransitionSaveTimer.current) {
+        clearTimeout(inTransitionSaveTimer.current);
+      }
       inTransition = false;
     }
   };
@@ -98,35 +99,61 @@ const PromoList = () => {
 
   const onFocusWrapperTransitionEnd = () => {
     setInTransition(false);
+
+    // const { swiper } = swiperRef.current;
+    // swiper.disable();
   };
+
+  const handleKeyDown = (e) => {
+    const { swiper } = swiperRef.current;
+
+    // Left
+    if (e.keyCode === 37) {
+      swiper.slidePrev();
+    }
+
+    // Right
+    if (e.keyCode === 39) {
+      swiper.slideNext();
+    }
+  };
+
+  useEffect(() => {
+    if (posterType === "video") {
+      const activeItem = document.querySelector(".swiper-slide-active");
+      activeItem.style.width = `${VIDEO_WIDTH}px`;
+    }
+    if (posterType === "poster") {
+      const prevItem = document.querySelector(".swiper-slide-prev");
+      prevItem.style.width = `${POSTER_WIDTH}px`;
+    }
+  }, [posterType]);
 
   return (
     <div className="promo-list">
       <Swiper
         ref={swiperRef}
         initialSlide={currentPosterIndex}
-        modules={[Keyboard]}
         spaceBetween={POSTER_SPACE_BETWEEN}
         slidesPerView={6}
-        keyboard={{ enabled: true }}
         onSlideChange={handleSlideChangeSlide}
         loop
+        enabled={posterType === "poster"}
       >
         {ITEMS.map((item, index) => (
-          <SwiperSlide
-            style={{
-              width:
-                index === currentPosterIndex && posterType === "video"
-                  ? `${VIDEO_WIDTH}px`
-                  : `${POSTER_WIDTH}px`,
-            }}
-            key={item.id}
-          >
-            <PromoItem
-              item={item}
-              height={POSTER_HEIGHT}
-              isWide={posterType === "video" && index === currentPosterIndex}
-            />
+          <SwiperSlide key={item.id}>
+            {({ isActive }) => (
+              <PromoItem
+                item={item}
+                // width={
+                //   isActive && posterType === "video"
+                //     ? VIDEO_WIDTH
+                //     : POSTER_WIDTH
+                // }
+                height={POSTER_HEIGHT}
+                isWide={isActive && posterType === "video"}
+              />
+            )}
           </SwiperSlide>
         ))}
       </Swiper>
@@ -139,7 +166,9 @@ const PromoList = () => {
           height: `${POSTER_HEIGHT}px`,
         }}
         onTransitionEnd={onFocusWrapperTransitionEnd}
-      ></div>
+        onKeyDown={handleKeyDown}
+        tabIndex={0}
+      />
     </div>
   );
 };
