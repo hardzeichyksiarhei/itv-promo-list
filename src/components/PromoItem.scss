@@ -8,12 +8,20 @@
   color: #fff;
   border-radius: 10px;
   font-size: 24px;
-  transition: width 0.5s ease;
+  transition: all 0.25s ease;
 }
 
 .swiper-slide {
-  transition: width 0.5s ease;
-  transition-property: width !important;
+  position: relative;
+  z-index: 10;
+  border-radius: 10px;
+
+  &-active,
+  &-prev {
+    transition: width 0.5s ease;
+    transition-property: width !important;
+  }
+
   &:nth-child(2n + 1) {
     .promo-item {
       background-color: #ffab91;

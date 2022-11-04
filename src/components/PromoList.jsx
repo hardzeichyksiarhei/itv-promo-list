@@ -28,61 +28,63 @@ const AUTO_VIDEO_DELAY = 3000;
 
 const PromoList = () => {
   const swiperRef = useRef(null);
+  const promoListFocusWrapper = useRef(null);
+
   const autoVideoTimer = useRef(null);
 
-  let inTransition = false;
-  let inTransitionSaveTimerMilliSeconds = 5000;
-  const inTransitionSaveTimer = useRef(null);
+  const inTransition = useRef(false);
+  // let inTransitionSaveTimerMilliSeconds = 5000;
+  // const inTransitionSaveTimer = useRef(null);
 
   const [currentPosterIndex, setCurrentPosterIndex] = useState(0);
   const [openedPosterIndex, setOpenedPosterIndex] = useState(0);
   const [posterType, setPosterType] = useState("poster");
+  const [playerOpen, setPlayerOpen] = useState(false);
+  const [posterOpened, setPosterOpened] = useState(false);
 
   const handleSlideChangeSlide = (swiper) => {
     const nextPosterIndex = swiper.realIndex;
-    console.log(swiper);
-    console.log(nextPosterIndex);
 
     removeAutoVideoTimer();
 
-    setCurrentPosterIndex(nextPosterIndex);
+    setPlayerOpen(false);
     setPosterType("poster");
+    setCurrentPosterIndex(nextPosterIndex);
 
     addAutoVideoTimer(nextPosterIndex);
   };
 
-  const setInTransition = (value) => {
-    if (value === true) {
-      inTransition = value;
-      const inTransitionOff = () => {
-        if (inTransitionSaveTimer.current) {
-          clearTimeout(inTransitionSaveTimer.current);
-        }
-        inTransition = false;
-      };
-      if (inTransitionSaveTimer.current) {
-        clearTimeout(inTransitionSaveTimer.current);
-      }
-      inTransitionSaveTimer.current = setTimeout(
-        inTransitionOff,
-        inTransitionSaveTimerMilliSeconds
-      );
-    } else if (value === false) {
-      if (inTransitionSaveTimer.current) {
-        clearTimeout(inTransitionSaveTimer.current);
-      }
-      inTransition = false;
-    }
-  };
+  // const setInTransition = (value) => {
+  //   if (value === true) {
+  //     inTransition = value;
+  //     const inTransitionOff = () => {
+  //       if (inTransitionSaveTimer.current) {
+  //         clearTimeout(inTransitionSaveTimer.current);
+  //       }
+  //       inTransition = false;
+  //     };
+  //     if (inTransitionSaveTimer.current) {
+  //       clearTimeout(inTransitionSaveTimer.current);
+  //     }
+  //     inTransitionSaveTimer.current = setTimeout(
+  //       inTransitionOff,
+  //       inTransitionSaveTimerMilliSeconds
+  //     );
+  //   } else if (value === false) {
+  //     if (inTransitionSaveTimer.current) {
+  //       clearTimeout(inTransitionSaveTimer.current);
+  //     }
+  //     inTransition = false;
+  //   }
+  // };
 
   const autoVideoHandler = (nextPosterIndex) => {
     removeAutoVideoTimer();
     if (nextPosterIndex !== null) {
       setOpenedPosterIndex(nextPosterIndex);
 
-      console.log("autoVideoHandler");
       setPosterType("video");
-      setInTransition(true);
+      // setInTransition(true);
     }
   };
 
@@ -97,15 +99,39 @@ const PromoList = () => {
     if (autoVideoTimer.current) clearTimeout(autoVideoTimer.current);
   };
 
-  const onFocusWrapperTransitionEnd = () => {
-    setInTransition(false);
+  useEffect(() => {
+    promoListFocusWrapper.current.addEventListener(
+      "transitionstart",
+      onFocusWrapperTransitionStart
+    );
+    return () => {
+      promoListFocusWrapper.current.removeEventListener(
+        "transitionstart",
+        onFocusWrapperTransitionStart
+      );
+    };
+  }, []);
 
-    // const { swiper } = swiperRef.current;
-    // swiper.disable();
+  const onFocusWrapperTransitionStart = () => {
+    inTransition.current = true;
+  };
+
+  const onFocusWrapperTransitionEnd = () => {
+    inTransition.current = false;
+    // setInTransition(false);
+
+    if (!posterOpened && !playerOpen) {
+      setPosterOpened(true);
+      setPlayerOpen(true);
+    } else if (posterOpened) {
+      setPosterOpened(false);
+    }
   };
 
   const handleKeyDown = (e) => {
     const { swiper } = swiperRef.current;
+
+    if (inTransition.current) return;
 
     // Left
     if (e.keyCode === 37) {
@@ -129,6 +155,20 @@ const PromoList = () => {
     }
   }, [posterType]);
 
+  const getPromoListFocusWrapperStyles = () => {
+    return {
+      width: posterType === "video" ? `${VIDEO_WIDTH}px` : `${POSTER_WIDTH}px`,
+      height: `${POSTER_HEIGHT}px`,
+    };
+  };
+
+  const getPromoVideoWrapperStyles = () => {
+    return {
+      width: posterType === "video" ? `${VIDEO_WIDTH}px` : `${POSTER_WIDTH}px`,
+      height: `${POSTER_HEIGHT}px`,
+    };
+  };
+
   return (
     <div className="promo-list">
       <Swiper
@@ -137,6 +177,7 @@ const PromoList = () => {
         spaceBetween={POSTER_SPACE_BETWEEN}
         slidesPerView={6}
         onSlideChange={handleSlideChangeSlide}
+        speed={500}
         loop
         enabled={posterType === "poster"}
       >
@@ -145,11 +186,6 @@ const PromoList = () => {
             {({ isActive }) => (
               <PromoItem
                 item={item}
-                // width={
-                //   isActive && posterType === "video"
-                //     ? VIDEO_WIDTH
-                //     : POSTER_WIDTH
-                // }
                 height={POSTER_HEIGHT}
                 isWide={isActive && posterType === "video"}
               />
@@ -159,16 +195,30 @@ const PromoList = () => {
       </Swiper>
 
       <div
+        ref={promoListFocusWrapper}
         className="promo-list-focus-wrapper"
-        style={{
-          width:
-            posterType === "video" ? `${VIDEO_WIDTH}px` : `${POSTER_WIDTH}px`,
-          height: `${POSTER_HEIGHT}px`,
-        }}
+        style={getPromoListFocusWrapperStyles()}
+        // onTransitionStart={onFocusWrapperTransitionStart}
         onTransitionEnd={onFocusWrapperTransitionEnd}
         onKeyDown={handleKeyDown}
         tabIndex={0}
       />
+
+      {playerOpen && (
+        <div
+          className="promo-list-video-wrapper"
+          style={getPromoVideoWrapperStyles()}
+        >
+          <iframe
+            width={VIDEO_WIDTH}
+            height={POSTER_HEIGHT}
+            src="https://www.youtube.com/embed/e_atyw0IDqg?controls=0"
+            frameBorder={0}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          ></iframe>
+        </div>
+      )}
     </div>
   );
 };
