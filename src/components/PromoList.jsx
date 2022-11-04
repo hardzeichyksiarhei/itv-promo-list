@@ -46,6 +46,7 @@ const PromoList = () => {
 
     removeAutoVideoTimer();
 
+    setPosterType("poster");
     setCurrentPosterIndex(nextPosterIndex);
 
     addAutoVideoTimer(nextPosterIndex);
@@ -108,8 +109,8 @@ const PromoList = () => {
         spaceBetween={POSTER_SPACE_BETWEEN}
         slidesPerView={6}
         keyboard={{ enabled: true }}
-        loop
         onSlideChange={handleSlideChangeSlide}
+        loop
       >
         {ITEMS.map((item, index) => (
           <SwiperSlide
