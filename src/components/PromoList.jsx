@@ -21,10 +21,11 @@ const ITEMS = [
 ];
 
 const POSTER_WIDTH = 290;
-const POSTER_HEIGHT = 490;
+const POSTER_HEIGHT = 523.13;
 const POSTER_SPACE_BETWEEN = 30;
 const VIDEO_WIDTH = POSTER_WIDTH * 3 + POSTER_SPACE_BETWEEN * 2;
 const AUTO_VIDEO_DELAY = 3000;
+const IN_TRANSITION_DURATION = 500;
 
 const PromoList = () => {
   const swiperRef = useRef(null);
@@ -33,8 +34,6 @@ const PromoList = () => {
   const autoVideoTimer = useRef(null);
 
   const inTransition = useRef(false);
-  // let inTransitionSaveTimerMilliSeconds = 5000;
-  // const inTransitionSaveTimer = useRef(null);
 
   const [currentPosterIndex, setCurrentPosterIndex] = useState(0);
   const [openedPosterIndex, setOpenedPosterIndex] = useState(0);
@@ -54,37 +53,12 @@ const PromoList = () => {
     addAutoVideoTimer(nextPosterIndex);
   };
 
-  // const setInTransition = (value) => {
-  //   if (value === true) {
-  //     inTransition = value;
-  //     const inTransitionOff = () => {
-  //       if (inTransitionSaveTimer.current) {
-  //         clearTimeout(inTransitionSaveTimer.current);
-  //       }
-  //       inTransition = false;
-  //     };
-  //     if (inTransitionSaveTimer.current) {
-  //       clearTimeout(inTransitionSaveTimer.current);
-  //     }
-  //     inTransitionSaveTimer.current = setTimeout(
-  //       inTransitionOff,
-  //       inTransitionSaveTimerMilliSeconds
-  //     );
-  //   } else if (value === false) {
-  //     if (inTransitionSaveTimer.current) {
-  //       clearTimeout(inTransitionSaveTimer.current);
-  //     }
-  //     inTransition = false;
-  //   }
-  // };
-
   const autoVideoHandler = (nextPosterIndex) => {
     removeAutoVideoTimer();
     if (nextPosterIndex !== null) {
       setOpenedPosterIndex(nextPosterIndex);
 
       setPosterType("video");
-      // setInTransition(true);
     }
   };
 
@@ -104,6 +78,7 @@ const PromoList = () => {
       "transitionstart",
       onFocusWrapperTransitionStart
     );
+
     return () => {
       promoListFocusWrapper.current.removeEventListener(
         "transitionstart",
@@ -118,7 +93,6 @@ const PromoList = () => {
 
   const onFocusWrapperTransitionEnd = () => {
     inTransition.current = false;
-    // setInTransition(false);
 
     if (!posterOpened && !playerOpen) {
       setPosterOpened(true);
@@ -157,8 +131,10 @@ const PromoList = () => {
 
   const getPromoListFocusWrapperStyles = () => {
     return {
+      transitionDuration: `${IN_TRANSITION_DURATION / 1000}s`,
       width: posterType === "video" ? `${VIDEO_WIDTH}px` : `${POSTER_WIDTH}px`,
       height: `${POSTER_HEIGHT}px`,
+      backgroundColor: posterType === "video" ? "#000" : "transparent",
     };
   };
 
@@ -177,15 +153,20 @@ const PromoList = () => {
         spaceBetween={POSTER_SPACE_BETWEEN}
         slidesPerView={6}
         onSlideChange={handleSlideChangeSlide}
-        speed={500}
+        speed={IN_TRANSITION_DURATION}
         loop
         enabled={posterType === "poster"}
       >
-        {ITEMS.map((item, index) => (
-          <SwiperSlide key={item.id}>
+        {ITEMS.map((item) => (
+          <SwiperSlide
+            style={{ transitionDuration: `${IN_TRANSITION_DURATION / 1000}s` }}
+            key={item.id}
+          >
             {({ isActive }) => (
               <PromoItem
                 item={item}
+                inTransitionDuration={IN_TRANSITION_DURATION}
+                width={POSTER_WIDTH}
                 height={POSTER_HEIGHT}
                 isWide={isActive && posterType === "video"}
               />
@@ -198,7 +179,6 @@ const PromoList = () => {
         ref={promoListFocusWrapper}
         className="promo-list-focus-wrapper"
         style={getPromoListFocusWrapperStyles()}
-        // onTransitionStart={onFocusWrapperTransitionStart}
         onTransitionEnd={onFocusWrapperTransitionEnd}
         onKeyDown={handleKeyDown}
         tabIndex={0}
@@ -208,6 +188,8 @@ const PromoList = () => {
         <div
           className="promo-list-video-wrapper"
           style={getPromoVideoWrapperStyles()}
+          onKeyDown={handleKeyDown}
+          tabIndex={0}
         >
           <iframe
             width={VIDEO_WIDTH}
